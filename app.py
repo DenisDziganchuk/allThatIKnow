@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
@@ -30,6 +30,24 @@ def about():
     return render_template("about.html")
 
 
-@app.route("/create_post")
+@app.route("/create_post", methods=["POST", "GET"])
 def create_post():
-    return render_template("create_post.html")
+    if request.method == "POST":
+        title = request.form["title"]
+        description = request.form["description"]
+        text = request.form["text"]
+        article = Article(title=title, description=description, text=text)
+        try:
+            db.session.add(article)
+            db.session.commit()
+            return redirect("/posts")
+        except:
+            return "Problem with saving post"
+    else:
+        return render_template("create_post.html")
+
+
+@app.route("/posts")
+def posts():
+    article = Article.query.order_by(Article.date.desc()).all()
+    return render_template('posts.html', article=article)
