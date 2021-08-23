@@ -47,6 +47,24 @@ def create_post():
         return render_template("create_post.html")
 
 
+@app.route("/posts/<int:id>/update", methods=["POST", "GET"])
+def update_post(id):
+    if request.method == "POST":
+        title = request.form["title"]
+        description = request.form["description"]
+        text = request.form["text"]
+        article = Article(title=title, description=description, text=text)
+        try:
+            db.session.add(article)
+            db.session.commit()
+            return redirect("/posts")
+        except:
+            return "Problem with updating post"
+    else:
+        article = Article.query.get(id)
+        return render_template("update_post.html", article=article)
+
+
 @app.route("/posts")
 def posts():
     article = Article.query.order_by(Article.date.desc()).all()

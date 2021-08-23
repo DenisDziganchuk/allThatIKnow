@@ -13,7 +13,7 @@ Posts
         <h2>{{post.title}}</h2>
         <p>{{post.description}}</p>
         <p><b>DATE: {{post.date.date()}}</b></p>
-        <a href="{{post.id}}" class="btn btn-warning"> More</a>
+        <a href="/posts/{{post.id}}" class="btn btn-warning"> More</a>
     </div>
     {% endfor %}
     {% else %}

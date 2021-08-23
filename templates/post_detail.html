@@ -9,9 +9,10 @@ Posts
     <h1>{{article.title}}</h1>
     <div class="alert alert-info">
         <h2>{{article.title}}</h2>
+        <p>{{article.text}}</p>
         <p>{{article.description}}</p>
         <p><b>DATE: {{article.date.date()}}</b></p>
-        <a href="/posts/{{article.id}}" class="btn btn-warning">Edit</a>
+        <a href="/posts/{{article.id}}/update" class="btn btn-warning">Edit</a>
         <a href="/posts/{{article.id}}/delete" class="btn btn-warning">Delete</a>
     </div>
 </div>
