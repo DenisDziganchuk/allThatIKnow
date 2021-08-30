@@ -8,6 +8,7 @@ from flask_login import UserMixin
 from flask_bcrypt import Bcrypt
 
 app = Flask(__name__)
+bcrypt = Bcrypt(app)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///blogs.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -126,9 +127,9 @@ def login():
 def register():
     form = RegisterForm()
     if form.validate_on_submit():
-        hash_password = Bcrypt.generate_password_hash(form.password.data)
+        hash_password = bcrypt.generate_password_hash(form.password.data)
         new_user = User(username=form.username.data, password=hash_password)
         db.session.add(new_user)
-        db.commit()
+        db.session.commit()
         return redirect(url_for("login"))
     return render_template("registration.html", form=form)
