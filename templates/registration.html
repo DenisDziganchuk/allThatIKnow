@@ -7,15 +7,26 @@ Registration
 
 
 {% block body %}
+<div class="div-form">
+    <main class="form-signin">
+      <form method="POST">
+          <img class="mb-4" src="https://getbootstrap.com/docs/5.1/assets/brand/bootstrap-logo.svg" alt="" width="72" height="57">
+        <h1>Create an account</h1>
 
-<h1>Create an account</h1>
+          {{form.hidden_tag()}}
+        <div class="form-floating">
+            {{form.username(type="text", class="form-control", id="floatingInput", placeholder="Username")}}
+          <label for="floatingInput">Username</label>
+        </div>
+        <div class="form-floating">
+            {{form.password(type="password", class="form-control", id="floatingPassword", placeholder="Password")}}
+          <label for="floatingPassword">Password</label>
+        </div>
 
-<form action="" method="POST">
-    {{form.hidden_tag()}}
-    {{form.username}}
-    {{form.password}}
-    {{form.submit}}
-</form>
-<a href="{{url_for('login')}}">Log in</a>
+          {{form.submit(class="w-100 btn btn-lg btn-primary")}}
+          <a href="{{url_for('login')}}" class="w-100 btn btn-lg btn-primary">Login</a>
+      </form>
+    </main>
+</div>
 
 {% endblock %}
