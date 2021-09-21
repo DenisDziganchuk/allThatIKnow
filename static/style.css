@@ -1,0 +1,7 @@
+li.ul {
+    display: none;
+}
+
+li.ul:clicked {
+    display: block;
+}

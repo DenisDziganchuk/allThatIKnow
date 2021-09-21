@@ -2,11 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
-    <link href="https://getbootstrap.com/docs/5.1/examples/headers/headers.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
     <title>{% block title %}{% endblock %}</title>
     <link rel="stylesheet" href="../static/form.css">
-<!--    <link rel="stylesheet" href="../static/headers.css">-->
     <style>
         .bd-placeholder-img {
             font-size: 1.125rem;
@@ -35,23 +34,34 @@
       <ul class="nav nav-pills">
         <li class="nav-item"><a href="/" class="nav-link" aria-current="page">Home</a></li>
         <li class="nav-item"><a href="/about" class="nav-link">About</a></li>
-        <li class="nav-item"><a href="/create_post" class="nav-link">Create post</a></li>
+          {% if current_user.username|length == 0 %}
+            <li></li>
+          {% else %}
+            <li class="nav-item"><a href="/create_post" class="nav-link">Create post</a></li>
+          {% endif %}
         <li class="nav-item"><a href="/posts" class="nav-link">Posts</a></li>
-        <li class="nav-item"><a href="/login" class="nav-link">Login</a></li>
-        <li class="nav-item"><a href="/register" class="nav-link">Register</a></li>
+          {% if current_user.username|length == 0 %}
+            <li class="nav-item"><a href="/login" class="nav-link">Login</a></li>
+            <li class="nav-item"><a href="/register" class="nav-link">Register</a></li>
+          {% else %}
+            <li></li>
+          {% endif %}
 
+        {% if current_user.username|length == 0 %}
+            <li></li>
+          {% else %}
+            <div class="dropdown text-end">
+              <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                <img src="https://github.com/{{current_user.username}}.png" alt="User not found" width="32" height="32" class="rounded-circle">
+              </a>
+              <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1">
+                  <li><a class="dropdown-item" href="{{url_for('dashboard')}}">Dashboard</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{{url_for('logout')}}">Sign out</a></li>
+              </ul>
+            </div>
+          {% endif %}
       </ul>
-        <div class="dropdown text-end">
-          <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-            <img src="https://github.com/mdo.png" alt="mdo" width="32" height="32" class="rounded-circle">
-          </a>
-          <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1" style="">
-            <li><a class="dropdown-item" href="#">New project...</a></li>
-            <li><a class="dropdown-item" href="#">Settings</a></li>
-            <li><a class="dropdown-item" href="#">Profile</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#">Sign out</a></li>
-          </ul>
     </header>
     {% block body %}{% endblock %}
   </div>

@@ -31,6 +31,7 @@ class Article(db.Model):
     description = db.Column(db.String(500), nullable=False)
     text = db.Column(db.Text, nullable=False)
     date = db.Column(db.DateTime, default=datetime.utcnow)
+    # author = db.Column(db.Text, default="Guest")
 
     def __repr__(self):
         return "<Article %r>" % self.id
@@ -75,6 +76,7 @@ def create_post():
         title = request.form["title"]
         description = request.form["description"]
         text = request.form["text"]
+        # author = current_user.username
         article = User(title=title, description=description, text=text)
         try:
             db.session.add(article)
@@ -105,7 +107,7 @@ def update_post(id):
 
 @app.route("/posts")
 def posts():
-    article = User.query.order_by(User.date.desc()).all()
+    article = Article.query.order_by(Article.date.desc()).all()
     return render_template('posts.html', article=article)
 
 
