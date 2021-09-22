@@ -10,7 +10,7 @@ from flask_bcrypt import Bcrypt
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///blogs.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = "denisdziganchuk"
 db = SQLAlchemy(app)
@@ -41,17 +41,22 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), nullable=False)
     password = db.Column(db.String(50), nullable=False)
-
+    github_username = db.Column(db.String(100), nullable=False)
 
 class RegisterForm(FlaskForm):
     username = StringField(validators=[InputRequired(), Length(min=3, max=20)], render_kw={"placeholder": "Username"})
     password = PasswordField(validators=[InputRequired(), Length(min=3, max=20)], render_kw={"placeholder": "Password"})
+    github_username = StringField(validators=[InputRequired(), Length(min=1, max=100)], render_kw={"placeholder": "Github Username"})
     submit = SubmitField("Register")
 
     def validate_username(self, username):
         existing_username = User.query.filter_by(username=username.data).first()
         if existing_username:
             raise ValidationError("User already exists! Try another username")
+    def validate_github(self, github_username):
+        existing_github = User.query.filter_by(github_username=github_username.data).first()
+        if existing_github:
+            raise ValidationError("User with Github username already exists! Check it for spelling errors")
 
 
 class LoginForm(FlaskForm):
@@ -62,15 +67,22 @@ class LoginForm(FlaskForm):
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    if current_user.is_authenticated:
+        return render_template("index.html", github_username=current_user.github_username)
+    else:
+        return render_template("index.html")
 
 
 @app.route("/about")
 def about():
-    return render_template("about.html")
+    if current_user.is_authenticated:
+        return render_template("about.html", github_username=current_user.github_username)
+    else:
+        return render_template("about.html")
 
 
 @app.route("/create_post", methods=["POST", "GET"])
+@login_required
 def create_post():
     if request.method == "POST":
         title = request.form["title"]
@@ -85,7 +97,10 @@ def create_post():
         except:
             return "Problem with saving post"
     else:
-        return render_template("create_post.html")
+        if current_user.is_authenticated:
+            return render_template("create_post.html", github_username=current_user.github_username)
+        else:
+            return render_template("create_post.html")
 
 
 @app.route("/posts/<int:id>/update", methods=["POST", "GET"])
@@ -102,19 +117,28 @@ def update_post(id):
             return "Problem with updating post"
     else:
         article = User.query.get(id)
-        return render_template("update_post.html", article=article)
+        if current_user.is_authenticated:
+            return render_template("update_post.html", article=article, github_username=current_user.github_username)
+        else:
+            return render_template("update_post.html", article=article)
 
 
 @app.route("/posts")
 def posts():
     article = Article.query.order_by(Article.date.desc()).all()
-    return render_template('posts.html', article=article)
+    if current_user.is_authenticated:
+        return render_template('posts.html', article=article, github_username=current_user.github_username)
+    else:
+        return render_template('posts.html', article=article)
 
 
 @app.route("/posts/<int:id>")
 def post_detail(id):
     article = User.query.get(id)
-    return render_template("post_detail.html", article=article)
+    if current_user.is_authenticated:
+        return render_template("post_detail.html", article=article, github_username=current_user.github_username)
+    else:
+        return render_template("post_detail.html", article=article)
 
 
 @app.route("/posts/<int:id>/delete")
@@ -137,7 +161,10 @@ def login():
             if bcrypt.check_password_hash(user.password, form.password.data):
                 login_user(user)
                 return redirect(url_for("dashboard"))
-    return render_template("login.html", form=form)
+    if current_user.is_authenticated:
+        return render_template("login.html", form=form, github_username=current_user.github_username)
+    else:
+        return render_template("login.html", form=form)
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -145,17 +172,23 @@ def register():
     form = RegisterForm()
     if form.validate_on_submit():
         hash_password = bcrypt.generate_password_hash(form.password.data)
-        new_user = User(username=form.username.data, password=hash_password)
+        new_user = User(username=form.username.data, password=hash_password, github_username=form.github_username.data)
         db.session.add(new_user)
         db.session.commit()
         return redirect(url_for("login"))
-    return render_template("registration.html", form=form)
+    if current_user.is_authenticated:
+        return render_template("registration.html", form=form, github_username=current_user.github_username)
+    else:
+        return render_template("registration.html", form=form)
 
 
 @app.route("/dashboard", methods=["GET", "POST"])
 @login_required
 def dashboard():
-    return render_template("dashboard.html", current_user=current_user)
+    if current_user.is_authenticated:
+        return render_template("dashboard.html", current_user=current_user, github_username=current_user.github_username)
+    else:
+        return render_template("dashboard.html")
 
 
 @app.route("/logout", methods=["GET", "POST"])
