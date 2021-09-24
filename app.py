@@ -1,3 +1,4 @@
+import flask_login
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -29,9 +30,7 @@ class Article(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String(500), nullable=False)
-    text = db.Column(db.Text, nullable=False)
     date = db.Column(db.DateTime, default=datetime.utcnow)
-    # author = db.Column(db.Text, default="Guest")
 
     def __repr__(self):
         return "<Article %r>" % self.id
@@ -39,20 +38,23 @@ class Article(db.Model):
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(20), nullable=False)
+    username = db.Column(db.String(20), unique=True, nullable=False)
     password = db.Column(db.String(50), nullable=False)
-    github_username = db.Column(db.String(100), nullable=False)
+    github_username = db.Column(db.String(100), unique=True, nullable=False)
+
 
 class RegisterForm(FlaskForm):
     username = StringField(validators=[InputRequired(), Length(min=3, max=20)], render_kw={"placeholder": "Username"})
     password = PasswordField(validators=[InputRequired(), Length(min=3, max=20)], render_kw={"placeholder": "Password"})
-    github_username = StringField(validators=[InputRequired(), Length(min=1, max=100)], render_kw={"placeholder": "Github Username"})
+    github_username = StringField(validators=[InputRequired(), Length(min=1, max=100)],
+                                  render_kw={"placeholder": "Github Username"})
     submit = SubmitField("Register")
 
     def validate_username(self, username):
         existing_username = User.query.filter_by(username=username.data).first()
         if existing_username:
             raise ValidationError("User already exists! Try another username")
+
     def validate_github(self, github_username):
         existing_github = User.query.filter_by(github_username=github_username.data).first()
         if existing_github:
@@ -87,9 +89,7 @@ def create_post():
     if request.method == "POST":
         title = request.form["title"]
         description = request.form["description"]
-        text = request.form["text"]
-        # author = current_user.username
-        article = User(title=title, description=description, text=text)
+        article = Article(title=title, description=description)
         try:
             db.session.add(article)
             db.session.commit()
@@ -104,19 +104,19 @@ def create_post():
 
 
 @app.route("/posts/<int:id>/update", methods=["POST", "GET"])
+@login_required
 def update_post(id):
     if request.method == "POST":
         title = request.form["title"]
         description = request.form["description"]
-        text = request.form["text"]
-        article = User(title=title, description=description, text=text)
+        article = User(title=title, description=description)
         try:
             db.session.commit()
             return redirect("/posts")
         except:
             return "Problem with updating post"
     else:
-        article = User.query.get(id)
+        article = Article.query.get(id)
         if current_user.is_authenticated:
             return render_template("update_post.html", article=article, github_username=current_user.github_username)
         else:
@@ -133,8 +133,9 @@ def posts():
 
 
 @app.route("/posts/<int:id>")
+@login_required
 def post_detail(id):
-    article = User.query.get(id)
+    article = Article.query.get(id)
     if current_user.is_authenticated:
         return render_template("post_detail.html", article=article, github_username=current_user.github_username)
     else:
@@ -142,8 +143,9 @@ def post_detail(id):
 
 
 @app.route("/posts/<int:id>/delete")
+@login_required
 def post_delete(id):
-    article = User.query.get_or_404(id)
+    article = Article.query.get_or_404(id)
     try:
         db.session.delete(article)
         db.session.commit()
@@ -186,7 +188,8 @@ def register():
 @login_required
 def dashboard():
     if current_user.is_authenticated:
-        return render_template("dashboard.html", current_user=current_user, github_username=current_user.github_username)
+        return render_template("dashboard.html", current_user=current_user,
+                               github_username=current_user.github_username)
     else:
         return render_template("dashboard.html")
 
