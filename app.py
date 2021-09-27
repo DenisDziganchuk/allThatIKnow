@@ -69,18 +69,12 @@ class LoginForm(FlaskForm):
 
 @app.route("/")
 def index():
-    if current_user.is_authenticated:
-        return render_template("index.html", github_username=current_user.github_username)
-    else:
-        return render_template("index.html")
+    return render_template("index.html")
 
 
 @app.route("/about")
 def about():
-    if current_user.is_authenticated:
-        return render_template("about.html", github_username=current_user.github_username)
-    else:
-        return render_template("about.html")
+    return render_template("about.html")
 
 
 @app.route("/create_post", methods=["POST", "GET"])
@@ -97,10 +91,7 @@ def create_post():
         except:
             return "Problem with saving post"
     else:
-        if current_user.is_authenticated:
-            return render_template("create_post.html", github_username=current_user.github_username)
-        else:
-            return render_template("create_post.html")
+        return render_template("create_post.html")
 
 
 @app.route("/posts/<int:id>/update", methods=["POST", "GET"])
@@ -117,29 +108,20 @@ def update_post(id):
             return "Problem with updating post"
     else:
         article = Article.query.get(id)
-        if current_user.is_authenticated:
-            return render_template("update_post.html", article=article, github_username=current_user.github_username)
-        else:
-            return render_template("update_post.html", article=article)
+        return render_template("update_post.html", article=article)
 
 
 @app.route("/posts")
 def posts():
     article = Article.query.order_by(Article.date.desc()).all()
-    if current_user.is_authenticated:
-        return render_template('posts.html', article=article, github_username=current_user.github_username)
-    else:
-        return render_template('posts.html', article=article)
+    return render_template('posts.html', article=article)
 
 
 @app.route("/posts/<int:id>")
 @login_required
 def post_detail(id):
     article = Article.query.get(id)
-    if current_user.is_authenticated:
-        return render_template("post_detail.html", article=article, github_username=current_user.github_username)
-    else:
-        return render_template("post_detail.html", article=article)
+    return render_template("post_detail.html", article=article)
 
 
 @app.route("/posts/<int:id>/delete")
@@ -163,10 +145,7 @@ def login():
             if bcrypt.check_password_hash(user.password, form.password.data):
                 login_user(user)
                 return redirect(url_for("dashboard"))
-    if current_user.is_authenticated:
-        return render_template("login.html", form=form, github_username=current_user.github_username)
-    else:
-        return render_template("login.html", form=form)
+    return render_template("login.html", form=form)
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -178,20 +157,13 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         return redirect(url_for("login"))
-    if current_user.is_authenticated:
-        return render_template("registration.html", form=form, github_username=current_user.github_username)
-    else:
-        return render_template("registration.html", form=form)
+    return render_template("registration.html", form=form)
 
 
 @app.route("/dashboard", methods=["GET", "POST"])
 @login_required
 def dashboard():
-    if current_user.is_authenticated:
-        return render_template("dashboard.html", current_user=current_user,
-                               github_username=current_user.github_username)
-    else:
-        return render_template("dashboard.html")
+    return render_template("dashboard.html", current_user=current_user)
 
 
 @app.route("/logout", methods=["GET", "POST"])
@@ -199,3 +171,11 @@ def dashboard():
 def logout():
     logout_user()
     return redirect(url_for("index"))
+
+
+@app.route("/user/<username>")
+def profile(username):
+    user = User.query.filter_by(username=username).first()
+    if user:
+        return render_template("profile.html", user=user)
+    return render_template("user_not_found.html",)

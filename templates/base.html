@@ -52,10 +52,12 @@
           {% else %}
             <div class="dropdown text-end">
               <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-                <img src="https://github.com/{{github_username}}.png" alt="User not found" width="32" height="32" class="rounded-circle">
+                <img src="https://github.com/{{current_user.github_username}}.png" alt="User not found" width="32" height="32" class="rounded-circle">
               </a>
               <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1">
                   <li><a class="dropdown-item" href="{{url_for('dashboard')}}">Dashboard</a></li>
+                  <li><a class="dropdown-item" href="/user/{{current_user.username}}">Profile</a></li>
+                  <li><a class="dropdown-item" href="{{url_for('dashboard')}}">Settings</a></li>
                   <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item" href="{{url_for('logout')}}">Sign out</a></li>
               </ul>
