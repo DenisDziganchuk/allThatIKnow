@@ -1,0 +1,4 @@
+include allThatIKnow/schema.sql
+graft allThatIKnow/static
+graft allThatIKnow/templates
+global-exclude *.pyc

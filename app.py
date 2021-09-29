@@ -1,4 +1,3 @@
-import flask_login
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -14,7 +13,9 @@ bcrypt = Bcrypt(app)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = "denisdziganchuk"
+app.config["FLASK_ENV"] = "production"
 db = SQLAlchemy(app)
+
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -100,7 +101,7 @@ def update_post(id):
     if request.method == "POST":
         title = request.form["title"]
         description = request.form["description"]
-        article = User(title=title, description=description)
+        article = Article(title=title, description=description)
         try:
             db.session.commit()
             return redirect("/posts")

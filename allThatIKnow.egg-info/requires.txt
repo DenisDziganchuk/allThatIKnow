@@ -1,0 +1,9 @@
+WTForms
+SQLAlchemy
+Flask
+Flask-WTF
+Flask-SQLAlchemy
+Flask-Login
+Flask-Bcrypt
+first
+bcrypt
