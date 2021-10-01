@@ -13,9 +13,7 @@ bcrypt = Bcrypt(app)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = "denisdziganchuk"
-app.config["FLASK_ENV"] = "production"
 db = SQLAlchemy(app)
-
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -28,16 +26,19 @@ def load_user(user_id):
 
 
 class Article(db.Model):
+    __tablename__ = "article"
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String(500), nullable=False)
     date = db.Column(db.DateTime, default=datetime.utcnow)
+    author = db.Column(db.String(20), nullable=False)
 
     def __repr__(self):
         return "<Article %r>" % self.id
 
 
 class User(db.Model, UserMixin):
+    __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False)
     password = db.Column(db.String(50), nullable=False)
@@ -45,10 +46,12 @@ class User(db.Model, UserMixin):
 
 
 class RegisterForm(FlaskForm):
+    __tablename__ = "registerform"
     username = StringField(validators=[InputRequired(), Length(min=3, max=20)], render_kw={"placeholder": "Username"})
     password = PasswordField(validators=[InputRequired(), Length(min=3, max=20)], render_kw={"placeholder": "Password"})
     github_username = StringField(validators=[InputRequired(), Length(min=1, max=100)],
                                   render_kw={"placeholder": "Github Username"})
+
     submit = SubmitField("Register")
 
     def validate_username(self, username):
@@ -63,9 +66,20 @@ class RegisterForm(FlaskForm):
 
 
 class LoginForm(FlaskForm):
+    __tablename__ = "loginform"
     username = StringField(validators=[InputRequired(), Length(min=3, max=20)], render_kw={"placeholder": "Username"})
     password = PasswordField(validators=[InputRequired(), Length(min=3, max=20)], render_kw={"placeholder": "Password"})
     submit = SubmitField("Login")
+
+
+class PasswordForm(FlaskForm):
+    password = PasswordField(validators=[InputRequired(), Length(min=3, max=20)], render_kw={"placeholder": "Password"})
+    submit = SubmitField("Change Password")
+
+
+class UsernameForm(FlaskForm):
+    username = StringField(validators=[InputRequired(), Length(min=3, max=20)], render_kw={"placeholder": "Username"})
+    submit = SubmitField("Change Username")
 
 
 @app.route("/")
@@ -84,7 +98,8 @@ def create_post():
     if request.method == "POST":
         title = request.form["title"]
         description = request.form["description"]
-        article = Article(title=title, description=description)
+        author = current_user.username
+        article = Article(title=title, description=description, author=author)
         try:
             db.session.add(article)
             db.session.commit()
@@ -98,18 +113,21 @@ def create_post():
 @app.route("/posts/<int:id>/update", methods=["POST", "GET"])
 @login_required
 def update_post(id):
-    if request.method == "POST":
-        title = request.form["title"]
-        description = request.form["description"]
-        article = Article(title=title, description=description)
-        try:
-            db.session.commit()
-            return redirect("/posts")
-        except:
-            return "Problem with updating post"
-    else:
-        article = Article.query.get(id)
-        return render_template("update_post.html", article=article)
+    if current_user.username == Article.query.get(id).author:
+        if request.method == "POST":
+            title = request.form["title"]
+            description = request.form["description"]
+            author = current_user.username
+            article = Article(title=title, description=description, author=author)
+            try:
+                db.session.commit()
+                return redirect("/posts")
+            except:
+                return "Problem with updating post"
+        else:
+            article = Article.query.get(id)
+            return render_template("update_post.html", article=article)
+    return render_template("access_denied.html")
 
 
 @app.route("/posts")
@@ -129,12 +147,14 @@ def post_detail(id):
 @login_required
 def post_delete(id):
     article = Article.query.get_or_404(id)
-    try:
-        db.session.delete(article)
-        db.session.commit()
-        return redirect("/posts")
-    except:
-        return "Error deleting post"
+    if current_user.username == article.author:
+        try:
+            db.session.delete(article)
+            db.session.commit()
+            return redirect("/posts")
+        except:
+            return "Error deleting post"
+    return render_template("access_denied.html")
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -179,4 +199,38 @@ def profile(username):
     user = User.query.filter_by(username=username).first()
     if user:
         return render_template("profile.html", user=user)
-    return render_template("user_not_found.html",)
+    return render_template("user_not_found.html")
+
+
+@app.route("/settings")
+@login_required
+def settings():
+    user = User.query.filter_by(username=current_user.username)
+    return render_template("profile_settings.html", user=user)
+
+
+@app.route("/settings/change_username", methods=["GET", "POST"])
+@login_required
+def change_username():
+    form = UsernameForm()
+    if form.validate_on_submit():
+        user = current_user
+        user.username = form.username.data
+        db.session.add(user)
+        db.session.commit()
+        return redirect(f"/user/{current_user.username}")
+    return render_template("change_username.html", form=form)
+
+
+@app.route("/settings/change_password", methods=["GET", "POST"])
+@login_required
+def change_password():
+    form = PasswordForm()
+    if form.validate_on_submit():
+        hash_password = bcrypt.generate_password_hash(form.password.data)
+        user = current_user
+        user.password = hash_password
+        db.session.add(user)
+        db.session.commit()
+        return redirect(f"/user/{current_user.username}")
+    return render_template("change_password.html", form=form)

@@ -11,11 +11,10 @@ Posts
         <h2>{{article.title}}</h2>
         <p>{{article.description}}</p>
         <p><b>DATE: {{article.date.date()}}</b></p>
-        {% if current_user.is_authenticated %}
+        <p>Author: {{article.author}}</p>
+        {% if current_user.is_authenticated and current_user.username == article.author %}
         <a href="/posts/{{article.id}}/update" class="btn btn-warning">Edit</a>
-        <a href="/posts/{{article.id}}/delete" class="btn btn-warning">Delete</a>
-        {% else %}
-        <li></li>
+        <a href="/posts/{{article.id}}/delete" class="btn btn-danger">Delete</a>
         {% endif %}
     </div>
 </div>
