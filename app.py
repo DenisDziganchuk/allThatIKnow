@@ -6,6 +6,7 @@ from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import InputRequired, Length, ValidationError
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_bcrypt import Bcrypt
+import time
 
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
@@ -75,11 +76,6 @@ class LoginForm(FlaskForm):
 class PasswordForm(FlaskForm):
     password = PasswordField(validators=[InputRequired(), Length(min=3, max=20)], render_kw={"placeholder": "Password"})
     submit = SubmitField("Change Password")
-
-
-class UsernameForm(FlaskForm):
-    username = StringField(validators=[InputRequired(), Length(min=3, max=20)], render_kw={"placeholder": "Username"})
-    submit = SubmitField("Change Username")
 
 
 @app.route("/")
@@ -209,19 +205,6 @@ def settings():
     return render_template("profile_settings.html", user=user)
 
 
-@app.route("/settings/change_username", methods=["GET", "POST"])
-@login_required
-def change_username():
-    form = UsernameForm()
-    if form.validate_on_submit():
-        user = current_user
-        user.username = form.username.data
-        db.session.add(user)
-        db.session.commit()
-        return redirect(f"/user/{current_user.username}")
-    return render_template("change_username.html", form=form)
-
-
 @app.route("/settings/change_password", methods=["GET", "POST"])
 @login_required
 def change_password():
@@ -234,3 +217,15 @@ def change_password():
         db.session.commit()
         return redirect(f"/user/{current_user.username}")
     return render_template("change_password.html", form=form)
+
+
+@app.route("/settings/delete_account", methods=["GET", "POST"])
+@login_required
+def user_delete():
+    user = User.query.get_or_404(current_user.id)
+    try:
+        db.session.delete(user)
+        db.session.commit()
+        return redirect("/")
+    except:
+        return "Error deleting user"

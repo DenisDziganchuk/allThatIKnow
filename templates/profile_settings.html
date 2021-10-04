@@ -9,7 +9,19 @@ Settings
 {% block body %}
 
 <h1>Settings</h1>
-<button type="button" class="btn btn-primary" onclick="location.href='/settings/change_username'"><h3>Change username</h3></button>
-<button type="button" class="btn btn-primary" onclick="location.href='/settings/change_password'"><h3>Change password</h3></button>
 
+<div class="tab">
+  <button type="button" class="btn btn-primary tablinks" onclick="openTab(event, 'changePassword')">Change password</button>
+  <button type="button" class="btn btn-danger tablinks" onclick="openTab(event, 'deleteAccount')">Delete account</button>
+</div>
+
+<div id="changePassword" class="tabcontent">
+    <h3>Change password</h3>
+</div>
+
+<div id="deleteAccount" class="tabcontent">
+    <h3>Delete account</h3>
+</div>
+
+<script src="../static/js/script.js"></script>
 {% endblock %}
