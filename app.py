@@ -3,10 +3,9 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import InputRequired, Length, ValidationError
+from wtforms.validators import InputRequired, Length, ValidationError, Optional
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_bcrypt import Bcrypt
-import time
 
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
@@ -50,8 +49,7 @@ class RegisterForm(FlaskForm):
     __tablename__ = "registerform"
     username = StringField(validators=[InputRequired(), Length(min=3, max=20)], render_kw={"placeholder": "Username"})
     password = PasswordField(validators=[InputRequired(), Length(min=3, max=20)], render_kw={"placeholder": "Password"})
-    github_username = StringField(validators=[InputRequired(), Length(min=1, max=100)],
-                                  render_kw={"placeholder": "Github Username"})
+    github_username = StringField(validators=[Optional(), Length(min=1, max=100)], render_kw={"placeholder": "Github Username"})
 
     submit = SubmitField("Register")
 
@@ -198,16 +196,10 @@ def profile(username):
     return render_template("user_not_found.html")
 
 
-@app.route("/settings")
+@app.route("/settings", methods=["GET", "POST"])
 @login_required
 def settings():
     user = User.query.filter_by(username=current_user.username)
-    return render_template("profile_settings.html", user=user)
-
-
-@app.route("/settings/change_password", methods=["GET", "POST"])
-@login_required
-def change_password():
     form = PasswordForm()
     if form.validate_on_submit():
         hash_password = bcrypt.generate_password_hash(form.password.data)
@@ -216,16 +208,18 @@ def change_password():
         db.session.add(user)
         db.session.commit()
         return redirect(f"/user/{current_user.username}")
-    return render_template("change_password.html", form=form)
+    return render_template("profile_settings.html", user=user, form=form)
 
 
 @app.route("/settings/delete_account", methods=["GET", "POST"])
 @login_required
 def user_delete():
-    user = User.query.get_or_404(current_user.id)
-    try:
-        db.session.delete(user)
-        db.session.commit()
-        return redirect("/")
-    except:
-        return "Error deleting user"
+    if request.method == "POST":
+        user = User.query.get_or_404(current_user.id)
+        try:
+            db.session.delete(user)
+            db.session.commit()
+            return redirect("/")
+        except:
+            return "Error deleting user"
+    return "Access denied"
